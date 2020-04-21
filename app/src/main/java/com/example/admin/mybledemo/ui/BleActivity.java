@@ -1,4 +1,4 @@
-package com.example.admin.mybledemo;
+package com.example.admin.mybledemo.ui;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
@@ -27,7 +27,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.admin.mybledemo.BleRssiDevice;
+import com.example.admin.mybledemo.R;
+import com.example.admin.mybledemo.Utils;
 import com.example.admin.mybledemo.adapter.ScanAdapter;
+import com.pgyersdk.update.PgyUpdateManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +40,7 @@ import cn.com.heaton.blelibrary.ble.Ble;
 import cn.com.heaton.blelibrary.ble.BleLog;
 import cn.com.heaton.blelibrary.ble.callback.BleScanCallback;
 import cn.com.heaton.blelibrary.ble.callback.BleStatusCallback;
-import cn.com.heaton.blelibrary.ble.model.BleDevice;
+import cn.com.heaton.blelibrary.ble.model.ScanRecord;
 import cn.com.heaton.blelibrary.ble.utils.BleUtils;
 import cn.com.superLei.aoparms.annotation.Permission;
 import cn.com.superLei.aoparms.annotation.PermissionDenied;
@@ -56,9 +60,10 @@ public class BleActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeLayout;
     private FloatingActionButton floatingActionButton;
     private RecyclerView recyclerView;
+    private FilterView filterView;
     private ScanAdapter adapter;
     private List<BleRssiDevice> bleRssiDevices;
-    private Ble<BleDevice> ble = Ble.getInstance();
+    private Ble<BleRssiDevice> ble = Ble.getInstance();
     private ObjectAnimator animator;
 
     @Override
@@ -68,14 +73,28 @@ public class BleActivity extends AppCompatActivity {
         initView();
         initAdapter();
         initLinsenter();
+        initBleStatus();
         requestPermission();
+    }
+
+    @Permission(value = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+            requestCode = REQUEST_PERMISSION_WRITE,
+            rationale = "读写SD卡权限被拒绝,将会影响自动更新版本功能哦!")
+    private void update() {
+        new PgyUpdateManager.Builder()
+                .setForced(false)                //设置是否强制更新
+                .setUserCanRetry(false)         //失败后是否提示重新下载
+                .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk
+                .register();
     }
 
     private void initAdapter() {
         bleRssiDevices = new ArrayList<>();
-        adapter = new ScanAdapter(this, R.layout.item_scan, bleRssiDevices);
+        adapter = new ScanAdapter(this, bleRssiDevices);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.addItemDecoration(new DividerItemDecoration(this,DividerItemDecoration.VERTICAL));
+        recyclerView.getItemAnimator().setChangeDuration(300);
+        recyclerView.getItemAnimator().setMoveDuration(300);
         recyclerView.setAdapter(adapter);
     }
 
@@ -85,6 +104,8 @@ public class BleActivity extends AppCompatActivity {
         tvAdapterStates = findViewById(R.id.tv_adapter_states);
         recyclerView = findViewById(R.id.recyclerView);
         floatingActionButton = findViewById(R.id.floatingButton);
+        filterView = findViewById(R.id.filterView);
+        filterView.init(this);
     }
 
     private void initLinsenter() {
@@ -94,15 +115,6 @@ public class BleActivity extends AppCompatActivity {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, Ble.REQUEST_ENABLE_BT);
             }
-        });
-        adapter.setOnItemClickListener((parent, view, device, position) -> {
-            if (ble.isScanning()) {
-                ble.stopScan();
-            }
-            startActivity(new Intent(
-                    BleActivity.this,
-                    DeviceInfoActivity.class)
-                    .putExtra(DeviceInfoActivity.EXTRA_TAG, device.getDevice()));
         });
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,15 +129,16 @@ public class BleActivity extends AppCompatActivity {
                 rescan();
             }
         });
+
     }
 
     //请求权限
-    @Permission(value = {Manifest.permission.ACCESS_COARSE_LOCATION},
+    @Permission(value = {Manifest.permission.ACCESS_COARSE_LOCATION,Manifest.permission.ACCESS_FINE_LOCATION},
             requestCode = REQUEST_PERMISSION_LOCATION,
             rationale = "需要蓝牙相关权限")
     public void requestPermission() {
         checkBlueStatus();
-        initBleStatus();
+        update();
     }
 
     @PermissionDenied
@@ -204,16 +217,16 @@ public class BleActivity extends AppCompatActivity {
         }
     }
 
-    private BleScanCallback<BleDevice> scanCallback = new BleScanCallback<BleDevice>() {
+    private BleScanCallback<BleRssiDevice> scanCallback = new BleScanCallback<BleRssiDevice>() {
         @Override
-        public void onLeScan(final BleDevice device, int rssi, byte[] scanRecord) {
+        public void onLeScan(final BleRssiDevice device, int rssi, byte[] scanRecord) {
             BleLog.i(TAG, "onLeScan: " + device.getBleName());
             if (TextUtils.isEmpty(device.getBleName())) return;
             synchronized (ble.getLocker()) {
                 for (int i = 0; i < bleRssiDevices.size(); i++) {
                     BleRssiDevice rssiDevice = bleRssiDevices.get(i);
-                    BleDevice bleDevice = rssiDevice.getDevice();
-                    if (TextUtils.equals(bleDevice.getBleAddress(), device.getBleAddress())){
+//                    BleDevice bleDevice = rssiDevice.getDevice();
+                    if (TextUtils.equals(rssiDevice.getBleAddress(), device.getBleAddress())){
                         if (rssiDevice.getRssi() != rssi && System.currentTimeMillis()-rssiDevice.getRssiUpdateTime() >1000L){
                             rssiDevice.setRssiUpdateTime(System.currentTimeMillis());
                             rssiDevice.setRssi(rssi);
@@ -222,8 +235,10 @@ public class BleActivity extends AppCompatActivity {
                         return;
                     }
                 }
-                BleRssiDevice rssiDevice = new BleRssiDevice(device, rssi);
-                bleRssiDevices.add(rssiDevice);
+//                BleRssiDevice rssiDevice = new BleRssiDevice(device, ScanRecord.parseFromBytes(scanRecord), rssi);
+                device.setScanRecord(ScanRecord.parseFromBytes(scanRecord));
+                device.setRssi(rssi);
+                bleRssiDevices.add(device);
                 adapter.notifyDataSetChanged();
             }
         }

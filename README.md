@@ -1,9 +1,10 @@
-####### 对蓝牙感兴趣可以加群讨论学习(QQ：494309361)
+####  对蓝牙感兴趣可以加群讨论学习(QQ：494309361)
 ### 有个人项目或者定制化需求的可加QQ:823581722 进行联系
 ### Email：jerryee0911@qq.com
 
-### 扫描下载APK:
-![二维码.png](https://www.pgyer.com/app/qrcode/Dr8d)
+### 扫描下载APK:(安装密码:android)
+![二维码.png](
+https://android-resource.oss-cn-qingdao.aliyuncs.com/GitClub/image/mJW4.png?Expires=1577947521&OSSAccessKeyId=TMP.hhbo7QSce5gPRayo3tJUYViA69964YTNBHGVNQd8PJ6L8PVwXatiaKGcL52pcneAzwAwv8jASidyskmj3g5HypuBK8AFrBRBN7Hi8krKU8pbGWNa4fxDaHsERWtJWC.tmp&Signature=ni2nOP8Ordl5srIw9LnvBJ1I5lY%3D)
 
 #### 一、先来看张BleLib库的api之间的关系图：
 ![BleLib库结构图.png](http://upload-images.jianshu.io/upload_images/3884117-2c5a0b95cda75158.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/840)
@@ -28,6 +29,30 @@
 ```
 
 ### 二、历史版本介绍：
+[![Version](https://img.shields.io/badge/BleLib-v3.0.5-blue.svg)](https://bintray.com/superliu/maven/BleLib/3.0.5)
+```
+1.添加自定义BleDevice接口（实现BleDeviceFactory接口）
+public class BleRssiDevice extends BleDevice{
+    //添加自定义属性值
+    private int deviceType;
+    private int rssi;
+    ...
+}
+必须在初始化时设置:
+Ble.options().setFactory(new BleFactory() {//实现自定义BleDevice时必须设置
+    @Override
+    public BleRssiDevice create(String address, String name) {
+        return new BleRssiDevice(address, name);//自定义BleDevice的子类
+    }
+})
+
+2.添加实现所有回调接口的Callback（可用于OTA升级等，完全解耦项目）
+public class MyBleWrapperCallback extends BleWrapperCallback<BleDevice> {
+    ...
+}
+
+Ble.options().setBleWrapperCallback(new MyBleWrapperCallback())
+```
 [![Version](https://img.shields.io/badge/BleLib-v3.0.0-blue.svg)](https://bintray.com/superliu/maven/BleLib/3.0.0)
 ```
 1.添加写入队列(异步,可自定义队列每个任务延迟时间)
@@ -459,9 +484,11 @@ OtaManager mOtaManager = new OtaManager(BleActivity.this);
 boolean result = mOtaManager.startOtaUpdate(file, (BleDevice) mBle.getConnetedDevices().get(0), mBle);
 Log.e("OTA升级结果:", result + "");
 ```
-### 四、Demo效果演示图：
+### 四、工具类截图：
 
-![Demo预览图.gif](https://upload-images.jianshu.io/upload_images/3884117-b367c285fc7430e3.gif?imageMogr2/auto-orient/strip)
+![](https://www.pgyer.com/image/view/app_screenshots/d72c86ea0d47a770d353219afe63f5b3-528)
+![](https://www.pgyer.com/image/view/app_screenshots/02d4a22f7e19aea2dccc0791c5fcd85b-528)
+![](https://www.pgyer.com/image/view/app_screenshots/ff9aae940594298cb5c77e8f2a0e7658-528)
 
 ### 五、如果你觉得不错，对你有过帮助，请给我一点打赏鼓励，支持我维护的动力：
 ![](https://upload-images.jianshu.io/upload_images/3884117-5d22ae84180a93ed.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/320)
