@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.admin.mybledemo">
+    package="com.blehelper.demo">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- 获取网络状态 -->
@@ -22,7 +22,7 @@
         >
 
         <provider
-            android:name="AppFileProvider"
+            android:name=".AppFileProvider"
             android:authorities="${applicationId}.android7.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -31,11 +31,6 @@
                 android:resource="@xml/provider_paths"
                 tools:replace="name,resource" />
         </provider>
-
-        <provider
-            android:name="com.pgyersdk.PgyerProvider"
-            android:authorities="${applicationId}.com.pgyer.provider"
-            android:exported="false" />
 
         <activity android:name=".ui.BleActivity"
             android:windowSoftInputMode="adjustPan">

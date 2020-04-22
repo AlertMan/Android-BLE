@@ -32,7 +32,7 @@
 
     </LinearLayout>
 
-    <com.example.admin.mybledemo.ui.FilterView
+    <com.blehelper.demo.ui.FilterView
         android:id="@+id/filterView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
