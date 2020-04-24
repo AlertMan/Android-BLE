@@ -3,7 +3,7 @@ package com.blehelper.demo.ui;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 
 public class IntroducedActivity extends AppCompatActivity {
 

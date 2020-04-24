@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.blehelper.demo.BleRssiDevice;
 import com.blehelper.demo.ui.DeviceInfoActivity;
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 
 import java.util.List;
 

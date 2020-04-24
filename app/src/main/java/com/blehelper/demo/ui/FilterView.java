@@ -19,7 +19,7 @@ import android.widget.PopupWindow;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 
 public class FilterView extends BaseFrameLayout {
     private static final String TAG = "FilterView";

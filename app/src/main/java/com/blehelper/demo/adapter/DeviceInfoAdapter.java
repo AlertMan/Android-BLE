@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 import com.blehelper.demo.Utils;
 
 import java.util.List;

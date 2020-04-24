@@ -11,7 +11,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 import com.blehelper.demo.Utils;
 import com.blehelper.demo.adapter.DeviceInfoAdapter;
 import java.util.ArrayList;

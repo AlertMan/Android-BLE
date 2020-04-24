@@ -107,13 +107,17 @@ public class BleOtaUpdater implements OtaListener {
 				return (byte) 3;
 			case OTA_CMD_EXECUTION_NEW_CODE:
 				return (byte) 4;
+			case OTA_CMD_RSP_CODE:
+				return (byte) 5;
+			case OTA_CMD_TEST_CODE:
+				return (byte) 6;
 			default:
 				return (byte) 0;
 		}
 	}
 
 	private OtaStatus.OtaCmd valueToCmd(int val) {
-		switch (val & 255) {
+		switch (val & 0xFF) {
 			case 1:
 				return OtaStatus.OtaCmd.OTA_CMD_META_DATA;
 			case 2:
@@ -122,6 +126,10 @@ public class BleOtaUpdater implements OtaListener {
 				return OtaStatus.OtaCmd.OTA_CMD_DATA_VERIFY;
 			case 4:
 				return OtaStatus.OtaCmd.OTA_CMD_EXECUTION_NEW_CODE;
+			case 5:
+				return OtaStatus.OtaCmd.OTA_CMD_RSP_CODE;
+			case 6:
+				return OtaStatus.OtaCmd.OTA_CMD_TEST_CODE;
 			default:
 				return null;
 		}
@@ -375,7 +383,7 @@ public class BleOtaUpdater implements OtaListener {
 	 * @param notify_data Result object
 	 */
 	public void otaGetResult(byte[] notify_data) {
-		OtaStatus.OtaCmd cmdType = this.valueToCmd(notify_data[2] & 255);
+		OtaStatus.OtaCmd cmdType = this.valueToCmd(notify_data[1] & 0xFF);
 		if (cmdType == null) {
 			this.otaPrintBytes(notify_data, "Notify data: ");
 			this.serErrorCode(OtaStatus.OtaResult.OTA_RESULT_RECEIVED_INVALID_PACKET);
@@ -408,11 +416,13 @@ public class BleOtaUpdater implements OtaListener {
 			} else {
 				switch (cmdType) {
 					case OTA_CMD_META_DATA:
-						short offset = (short) ((notify_data[4] & 255) + ((notify_data[5] & 255) << 8));
-						this.setOffset(offset);
+						//fixme:暂不回复写入字节数
+//						short offset = (short) ((notify_data[4] & 255) + ((notify_data[5] & 255) << 8));
+						this.setOffset(0);
 						break;
 					case OTA_CMD_BRICK_DATA:
-						short size = (short) ((notify_data[4] & 255) + ((notify_data[5] & 255) << 8));
+						//fixme:暂不回复写入字节数
+//						short size = (short) ((notify_data[4] & 255) + ((notify_data[5] & 255) << 8));
 						this.notifyReadDataCompleted();
 						break;
 					case OTA_CMD_DATA_VERIFY:
@@ -424,6 +434,16 @@ public class BleOtaUpdater implements OtaListener {
 					case OTA_CMD_EXECUTION_NEW_CODE:
 						if(BuildConfig.DEBUG) {
 							Log.i(TAG, "This should never happened");
+						}
+						break;
+					case OTA_CMD_RSP_CODE:
+						if(BuildConfig.DEBUG) {
+							Log.i(TAG, "OTA_CMD_RSP_CODE");
+						}
+						break;
+					case OTA_CMD_TEST_CODE:
+						if(BuildConfig.DEBUG) {
+							Log.i(TAG, "OTA_CMD_TEST_CODE");
 						}
 						break;
 					default:
@@ -534,7 +554,7 @@ public class BleOtaUpdater implements OtaListener {
 			}
 
 			// Remaining data block size
-			int brickDataSize = fileSize - metaSize;
+			int brickDataSize = fileSize;
 			int transfereedSize = 0;
 			if(BuildConfig.DEBUG) {
 				Log.d(TAG, "offset=" + offset1 + " meta size " + metaSize);

@@ -10,7 +10,9 @@ public class OtaStatus {
         OTA_CMD_META_DATA,
         OTA_CMD_BRICK_DATA,
         OTA_CMD_DATA_VERIFY,
-        OTA_CMD_EXECUTION_NEW_CODE
+        OTA_CMD_EXECUTION_NEW_CODE,
+        OTA_CMD_RSP_CODE,
+        OTA_CMD_TEST_CODE
     }
 
     public enum OtaResult {

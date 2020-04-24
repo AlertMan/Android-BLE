@@ -28,10 +28,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.blehelper.demo.BleRssiDevice;
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 import com.blehelper.demo.Utils;
 import com.blehelper.demo.adapter.ScanAdapter;
-import com.pgyersdk.update.PgyUpdateManager;
+import com.tencent.bugly.beta.Beta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,11 +81,7 @@ public class BleActivity extends AppCompatActivity {
             requestCode = REQUEST_PERMISSION_WRITE,
             rationale = "读写SD卡权限被拒绝,将会影响自动更新版本功能哦!")
     private void update() {
-        new PgyUpdateManager.Builder()
-                .setForced(false)                //设置是否强制更新
-                .setUserCanRetry(false)         //失败后是否提示重新下载
-                .setDeleteHistroyApk(true)     // 检查更新前是否删除本地历史 Apk
-                .register();
+        Beta.checkUpgrade();
     }
 
     private void initAdapter() {
