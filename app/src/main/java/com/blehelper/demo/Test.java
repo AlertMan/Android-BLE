@@ -46,8 +46,8 @@ public class Test extends AppCompatActivity {
             rationale = "读写SD卡权限被拒绝,将会影响OTA升级功能哦!")
     public void updateOta() {
         //此处为了方便把OTA升级文件直接放到assets文件夹下，拷贝到/aceDownload/文件夹中  以便使用
-        Utils.copyOtaFile(Test.this, path);
-        SystemClock.sleep(200);
+//        Utils.copyOtaFile(Test.this, path);
+//        SystemClock.sleep(200);
         File file = new File(path + Constant.Constance.OTA_FILE_PATH);
         OtaManager mOtaManager = new OtaManager(Test.this);
         boolean result = mOtaManager.startOtaUpdate(file, ble.getConnetedDevices().get(0), ble);

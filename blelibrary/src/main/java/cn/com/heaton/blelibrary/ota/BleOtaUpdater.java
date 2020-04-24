@@ -12,6 +12,8 @@ import java.util.concurrent.Semaphore;
 import cn.com.heaton.blelibrary.ble.Ble;
 import cn.com.heaton.blelibrary.ble.model.BleDevice;
 import cn.com.heaton.blelibrary.BuildConfig;
+import cn.com.heaton.blelibrary.ble.utils.ByteUtils;
+import cn.com.heaton.blelibrary.ble.utils.CrcUtils;
 
 /**
  * OTA Update Manager
@@ -23,8 +25,10 @@ public class BleOtaUpdater implements OtaListener {
 	private Ble mBleManager;
 	private       int       mStartOffset = 0;//The file reads the position offset
 	private       int       mPercent     = 0;//File read percentage
+	private       int       fileCrc     = -1;//File crc 注意这个值是实时计算
+	private       int       mFrameCnt     = 0;//发送的帧数
 	private final int       mTimeout     = 12;//Write timeout (seconds)
-	private final int       mPacketSize  = 256;//Packet size
+	private final int       mPacketSize  = 248;//Packet data size 246 + 5 + 2 = 253 < 256;
 	private       boolean   mShouldStop  = false;//Whether to stop
 	private Handler mHandler;//Main thread object
 	private String mFilePath    = null;//file path
@@ -41,7 +45,9 @@ public class BleOtaUpdater implements OtaListener {
 	public static final int OTA_FAIL   = 3;
 	public static final int OTA_BEFORE = 4;
 
+
 	public BleOtaUpdater(Handler handler) {
+		mFrameCnt= 0;
 		mHandler = handler;
 		this.mRetValue = OtaStatus.OtaResult.OTA_RESULT_SUCCESS;
 		// Initialize the thread
@@ -147,7 +153,7 @@ public class BleOtaUpdater implements OtaListener {
 	/**
 	 * Send a packet
 	 * @param cmd Send the command
-	 * @param checksum Check the value
+	 * @param checksum Check the value 全部重新计算
 	 * @param data data
 	 * @param dataLength Data length
 	 * @return Whether to send successfully
@@ -156,7 +162,7 @@ public class BleOtaUpdater implements OtaListener {
 		// Get the command byte
 		byte cmdVal = this.cmdToValue(cmd);
 		// Conversion check length is byte (high and low)
-		byte[] checksumBytes = new byte[]{(byte) checksum, (byte) (checksum >> 8)};
+		byte[] checksumBytes = new byte[2];
 		// Initialize the send header
 		byte[] head = new byte[3];
 		int packetLength;// Send packet size
@@ -165,24 +171,20 @@ public class BleOtaUpdater implements OtaListener {
 		switch (cmd) {
 			case OTA_CMD_META_DATA:
 			case OTA_CMD_BRICK_DATA:
-				head[0] = (byte) (dataLength + 1);
-				head[1] = (byte) (dataLength + 1 >> 8);
-				head[2] = cmdVal;
+			case OTA_CMD_DATA_VERIFY:
+			case OTA_CMD_EXECUTION_NEW_CODE:
+				head[0] = (byte) 0xAA;
+				head[1] = cmdVal;
+				head[2] = (byte)(data.length & 0xFF);
 				packetLength = head.length + dataLength + checksumBytes.length;
 				dataPacket = new byte[packetLength];
 				System.arraycopy(head, 0, dataPacket, 0, head.length);
 				System.arraycopy(data, 0, dataPacket, head.length, dataLength);
+				byte[] tmpChecksumBytes = CrcUtils.CRC16.CRC16_HY(dataPacket,0,packetLength - checksumBytes.length);
+				//fixme:大端？
+				checksumBytes[0] = tmpChecksumBytes[1];
+				checksumBytes[1] = tmpChecksumBytes[0];
 				System.arraycopy(checksumBytes, 0, dataPacket, head.length + dataLength, checksumBytes.length);
-				break;
-			case OTA_CMD_DATA_VERIFY:
-			case OTA_CMD_EXECUTION_NEW_CODE:
-				packetLength = head.length + checksumBytes.length;
-				dataPacket = new byte[packetLength];
-				dataPacket[0] = 1;
-				dataPacket[1] = 0;
-				dataPacket[2] = cmdVal;
-				dataPacket[3] = checksumBytes[0];
-				dataPacket[4] = checksumBytes[1];
 				break;
 			default:
 				if(BuildConfig.DEBUG) {
@@ -219,32 +221,17 @@ public class BleOtaUpdater implements OtaListener {
 	}
 
 	/**
-	 * Send meta information data
-	 * @param fin Data read in stream
+	 * Send meta information data  APP_OTA_TYPE_START_FRAME
+	 * @param fileSize
 	 * @return The size of the send
 	 * @throws IOException
 	 */
-	private int otaSendMetaData(FileInputStream fin) throws IOException {
-		// Read 2 bytes in the file
-		byte[] metaLen = new byte[2];
-		fin.read(metaLen);
-		// Converted to total data length (high and low)
-		short dataLength = (short) (((metaLen[1] & 255) << 8) + (metaLen[0] & 255));
-		byte[] data = new byte[dataLength];
-		// Read metadata
-		int readLength = fin.read(data);
-		if (readLength < 0) {
-			return -1;
-		} else {
-			// Gets the check size of each byte of Meta
-			short checksum = this.cmdToValue(OtaStatus.OtaCmd.OTA_CMD_META_DATA);
+	private int otaSendMetaData(int fileSize) throws IOException {
+		byte[] metaData = ByteUtils.int2byte(fileSize);
 
-			// Statistics the size of the entire meta check
-			for (int i = 0; i < readLength; ++i) {
-				checksum = (short) (checksum + (data[i] & 255));
-			}
-			return this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_META_DATA, checksum, data, dataLength) ? readLength + 2 : -1;
-		}
+		short dataLength = (short) metaData.length;
+
+		return this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_META_DATA, (short)0, metaData, dataLength) ? dataLength : -1;
 	}
 
 	/**
@@ -255,9 +242,9 @@ public class BleOtaUpdater implements OtaListener {
 	 * @throws IOException
 	 */
 	private int otaSendBrickData(FileInputStream fin, int dataLength) throws IOException {
-		byte[] data = new byte[dataLength];
+		byte[] data = new byte[dataLength + 2];
 		// Read the data block
-		int readLength = fin.read(data);
+		int readLength = fin.read(data,2,dataLength);
 		if (readLength <= 0) {// Reading failed
 			if(BuildConfig.DEBUG) {
 				Log.w(TAG, "otaSendBrickData:No data read from file");
@@ -267,14 +254,14 @@ public class BleOtaUpdater implements OtaListener {
 			if (readLength < dataLength) {
 				dataLength = readLength;
 			}
+			//Get Frame index
+			mFrameCnt++;
+			byte[] mFrameCntBytes = ByteUtils.int2byte(mFrameCnt);
+			data[0] = mFrameCntBytes[1];
+			data[1] = mFrameCntBytes[0];
 			// Get the size of each byte
 			short checksum = this.cmdToValue(OtaStatus.OtaCmd.OTA_CMD_BRICK_DATA);
-
-			// The size of the checksum of the statistics block
-			for (int i = 0; i < dataLength; ++i) {
-				checksum = (short) (checksum + (data[i] & 255));
-			}
-
+			fileCrc = CrcUtils.CRC16.CRC16_HY(data,0,dataLength,fileCrc);
 			// Send a packet
 			if (this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_BRICK_DATA, checksum, data, dataLength)) {
 				return readLength;
@@ -288,20 +275,23 @@ public class BleOtaUpdater implements OtaListener {
 	}
 
 	/**
-	 * Send the authentication packet command
+	 * Send the authentication packet command //APP_OTA_TYPE_STOP_FRAME
 	 * @return whether succeed
 	 */
-	private boolean otaSendVerifyCmd() {
-		byte checksum = this.cmdToValue(OtaStatus.OtaCmd.OTA_CMD_DATA_VERIFY);
-		return this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_DATA_VERIFY, checksum, null, 0) && this.waitVerifyCmdDone();
+	private boolean otaSendVerifyCmd(byte[] data) {
+		byte[] crcData = new byte[2];
+		crcData[0] = data[0];
+		crcData[1] = data[1];
+		return this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_DATA_VERIFY, (short)0, crcData, data.length) && this.waitVerifyCmdDone();
 	}
 
 	/**
-	 * Send a reset service command
+	 * Send a reset service command //APP_OTA_TYPE_UPDATE_FRAME
 	 */
 	private void otaSendResetCmd() {
-		byte checksum = this.cmdToValue(OtaStatus.OtaCmd.OTA_CMD_EXECUTION_NEW_CODE);
-		this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_EXECUTION_NEW_CODE, checksum, null, 0);
+		byte[] data = new byte[1];
+		data[0] = 4;
+		this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_EXECUTION_NEW_CODE, (short)0, data, data.length);
 	}
 
 	private void releaseSemaphore(Semaphore semp) {
@@ -514,7 +504,7 @@ public class BleOtaUpdater implements OtaListener {
 			}
 
 			// Send meta information data
-			int metaSize = this.otaSendMetaData(fileInputStream);
+			int metaSize = this.otaSendMetaData(fileSize);
 			if (metaSize < 0 || mShouldStop) {// Sending metadata error
 				fileInputStream.close();
 				this.serErrorCode(OtaStatus.OtaResult.OTA_RESULT_SEND_META_ERROR);
@@ -597,8 +587,10 @@ public class BleOtaUpdater implements OtaListener {
 				this.mByteRate = (int) ((long) (transfereedSize * 1000) / (now - begin));
 			} while (offset1 < brickDataSize);
 
+
+			byte[] fileCrcByts = ByteUtils.int2byte(fileCrc);
 			// Send the server to verify the packet command
-			if (!this.otaSendVerifyCmd() || mShouldStop) {
+			if (!this.otaSendVerifyCmd(fileCrcByts) || mShouldStop) {
 				fileInputStream.close();
 				this.serErrorCode(OtaStatus.OtaResult.OTA_RESULT_FW_VERIFY_ERROR);
 				if (mHandler != null) {

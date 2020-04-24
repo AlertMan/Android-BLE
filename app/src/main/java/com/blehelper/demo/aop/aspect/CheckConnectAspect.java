@@ -19,15 +19,15 @@ import cn.com.heaton.blelibrary.ble.Ble;
 @Aspect
 public class CheckConnectAspect {
 
-    private static final String CHECK_CONNECT = "execution(@com.example.admin.mybledemo.aop.CheckConnect * *(..))";
+    private static final String CHECK_CONNECT = "execution(@com.belhelper.demo.aop.CheckConnect * *(..))";
 
-    @Pointcut("execution(@com.example.admin.mybledemo.aop.CheckConnect * *(..))")//方法切入点
+    @Pointcut("execution(@com.belhelper.demo.aop.CheckConnect * *(..))")//方法切入点
     public void methodAnnotated() {
     }
 
 //    @Around("methodAnnotated()")//在连接点进行方法替换
 
-    @Around("execution(@com.example.admin.mybledemo.aop.CheckConnect * *(..)) && @annotation(checkConnect)")
+    @Around("execution(@com.belhelper.demo.aop.CheckConnect * *(..)) && @annotation(checkConnect)")
     public void aroundJoinPoint(ProceedingJoinPoint joinPoint, CheckConnect checkConnect) throws Throwable {
         List list = Ble.getInstance().getConnetedDevices();
         if(list == null || list.size() == 0){

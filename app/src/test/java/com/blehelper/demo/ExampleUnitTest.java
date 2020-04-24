@@ -1,4 +1,4 @@
-package com.blehelper.demo.blehelper;
+package com.blehelper.demo;
 
 import org.junit.Test;
 

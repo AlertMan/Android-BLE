@@ -90,6 +90,45 @@ public class CrcUtils {
 
     }
     public static class CRC16 {
+        /**
+         * 直接参考华云给的C实现
+         * @param datas
+         * @return
+         */
+        public static int CRC16_HY(byte[] datas, int offset, int length,int crc){
+            if(crc == -1){
+                crc = 0xFFFF;
+            }
+            if(datas != null) {
+                for (int i = offset, cnt = offset + length; i < cnt; i++) {
+                    crc =  ((crc >> 8) | (crc << 8));
+                    crc ^= datas[i];
+                    crc ^= (crc & 0xFF) >> 4;
+                    crc ^= (crc << 8) << 4;
+                    crc ^= ((crc & 0xFF) << 4) << 1;
+                }
+            }
+            return crc;
+        }
+        /**
+         * 直接参考华云给的C实现
+         * @param datas
+         * @return
+         */
+        public static byte[] CRC16_HY(byte[] datas, int offset, int length){
+            int crc = 0xFFFF;
+            if(datas != null) {
+                for (int i = offset, cnt = offset + length; i < cnt; i++) {
+                    crc =  ((crc >> 8) | (crc << 8));
+                    crc ^= datas[i];
+                    crc ^= (crc & 0xFF) >> 4;
+                    crc ^= (crc << 8) << 4;
+                    crc ^= ((crc & 0xFF) << 4) << 1;
+                }
+            }
+            return ByteUtils.int2byte(crc);
+        }
+
         public static int CRC16_IBM(byte[] source, int offset, int length) {
             int wCRCin = 0x0000;
             // Integer.reverse(0x8005) >>> 16

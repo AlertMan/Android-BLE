@@ -4,7 +4,7 @@ apply plugin: 'android-aspectjx'
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.example.admin.mybledemo"
+        applicationId "com.belhelper.demo"
         minSdkVersion 19
         targetSdkVersion 28
         versionCode 15

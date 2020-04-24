@@ -18,7 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.blehelper.demo.blehelper.R;
+import com.blehelper.demo.R;
 import com.blehelper.demo.Utils;
 
 import java.io.UnsupportedEncodingException;
