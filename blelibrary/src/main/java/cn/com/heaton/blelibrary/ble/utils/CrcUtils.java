@@ -99,6 +99,7 @@ public class CrcUtils {
             if(crc == -1){
                 crc = 0xFFFF;
             }
+            crc ^= 0xFFFF;
             if(datas != null) {
                 for (int i = offset, cnt = offset + length; i < cnt; i++) {
                     crc =  ((crc >> 8) | (crc << 8));
@@ -119,14 +120,16 @@ public class CrcUtils {
             int crc = 0xFFFF;
             if(datas != null) {
                 for (int i = offset, cnt = offset + length; i < cnt; i++) {
-                    crc =  ((crc >> 8) | (crc << 8));
+                    crc =  (byte)(crc >> 8) | (crc << 8);
                     crc ^= datas[i];
-                    crc ^= (crc & 0xFF) >> 4;
+                    crc ^= (byte)(crc & 0xFF) >> 4;
                     crc ^= (crc << 8) << 4;
                     crc ^= ((crc & 0xFF) << 4) << 1;
                 }
             }
-            return ByteUtils.int2byte(crc);
+            crc &= 0xFFFF;
+            short shorCrc = (short)crc;
+            return ByteUtils.short2Bytes(shorCrc);
         }
 
         public static int CRC16_IBM(byte[] source, int offset, int length) {

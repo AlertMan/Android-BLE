@@ -236,9 +236,8 @@ public class BleOtaUpdater implements OtaListener {
 	 */
 	private int otaSendMetaData(int fileSize) throws IOException {
 		byte[] metaData = ByteUtils.int2byte(fileSize);
-
+		metaData = ByteUtils.reverseBytes(metaData);
 		short dataLength = (short) metaData.length;
-
 		return this.otaSendPacket(OtaStatus.OtaCmd.OTA_CMD_META_DATA, (short)0, metaData, dataLength) ? dataLength : -1;
 	}
 

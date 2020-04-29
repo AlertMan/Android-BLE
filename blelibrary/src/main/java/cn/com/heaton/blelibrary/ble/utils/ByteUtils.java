@@ -13,6 +13,23 @@ import java.nio.charset.Charset;
 
 public class ByteUtils {
 
+    /**
+     * reverseBytes
+     * @param input
+     * @return
+     */
+    public static byte[] reverseBytes(byte[] input) {
+        if(input == null){
+            return null;
+        }
+        final int len = input.length;
+        byte[] buffer = new byte[len];
+        for(int i=len; i>0; i--){
+            buffer[len - i] = input[i - 1];
+        }
+        return buffer;
+    }
+
     //inputstream转byte[]
     public static byte[] stream2Bytes(InputStream input) {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -68,7 +85,7 @@ public class ByteUtils {
         }
         StringBuilder b = new StringBuilder();
         for (int i = 0; i<bytes.length; i++) {
-            b.append(String.format("%02x", bytes[i] & 0xFF));
+            b.append(String.format("%02X ", bytes[i] & 0xFF));
         }
         return b.toString();
     }

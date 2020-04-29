@@ -747,9 +747,9 @@ public final class Ble<T extends BleDevice> {
         UUID uuid_notify = UUID.fromString("d44bc439-abfd-45a2-b575-925416129601");
         UUID uuid_notify_desc = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
-        UUID uuid_ota_service = UUID.fromString("0000fee8-0000-1000-8000-00805f9b34fb");
-        UUID uuid_ota_notify_cha = UUID.fromString("003784cf-f7e3-55b4-6c4c-9fd140100a16");
-        UUID uuid_ota_write_cha = UUID.fromString("013784cf-f7e3-55b4-6c4c-9fd140100a16");
+        UUID uuid_ota_service = UUID.fromString("6f400001-b5a3-f393-e0a9-e50e24dcca9e");
+        UUID uuid_ota_notify_cha = UUID.fromString("6f400003-b5a3-f393-e0a9-e50e24dcca9e");
+        UUID uuid_ota_write_cha = UUID.fromString("6f400002-b5a3-f393-e0a9-e50e24dcca9e");
 
         public UUID[] getUuidServicesExtra() {
             return uuid_services_extra;

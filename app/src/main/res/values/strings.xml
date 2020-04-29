@@ -17,7 +17,7 @@
 
 
     <!-- Menu items -->
-    <string name="menu_introduced">错误码相关</string>
+    <string name="menu_introduced">OTA升级</string>
     <string name="menu_disconnect_all">断开所有设备</string>
     <string name="menu_connect_all">连接所有设备</string>
     <string name="menu_disconnect">Disconnect</string>
@@ -37,6 +37,6 @@
     <string name="line_success">连接成功</string>
     <string name="line_disconnect">断开连接</string>
     <string name="menu_share">分享</string>
-    <string name="menu_contribute">捐助/联系作者</string>
+    <string name="menu_contribute">联系作者</string>
 
 </resources>

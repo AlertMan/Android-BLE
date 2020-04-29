@@ -277,16 +277,16 @@ public class BleActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_introduced:
-                startActivity(new Intent(BleActivity.this, IntroducedActivity.class));
+                startActivity(new Intent(BleActivity.this, OTAActivity.class));
                 break;
             case R.id.menu_share:
                 Utils.shareAPK(this);
                 break;
             case R.id.menu_contribute:
-                ImageView imageView = new ImageView(this);
-                imageView.setImageResource(R.drawable.wechat);
+                TextView imageView = new TextView(this);
+                imageView.setText("13880657399");
                 new AlertDialog.Builder(BleActivity.this)
-                        .setTitle("打赏/联系作者")
+                        .setTitle("联系作者")
                         .setView(imageView)
                         .create()
                         .show();

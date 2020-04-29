@@ -1,10 +1,13 @@
 package com.blehelper.demo.adapter;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Environment;
+import android.os.SystemClock;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
@@ -18,14 +21,18 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.blehelper.demo.Constant;
 import com.blehelper.demo.R;
 import com.blehelper.demo.Utils;
+import com.blehelper.demo.ui.OTAActivity;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.UUID;
 
 import cn.com.heaton.blelibrary.ble.Ble;
+import cn.com.heaton.blelibrary.ble.BleLog;
 import cn.com.heaton.blelibrary.ble.callback.BleNotiftCallback;
 import cn.com.heaton.blelibrary.ble.callback.BleReadCallback;
 import cn.com.heaton.blelibrary.ble.callback.BleReadDescCallback;
@@ -34,8 +41,14 @@ import cn.com.heaton.blelibrary.ble.callback.BleWriteDescCallback;
 import cn.com.heaton.blelibrary.ble.model.BleDevice;
 import cn.com.heaton.blelibrary.ble.utils.ByteUtils;
 import cn.com.heaton.blelibrary.ble.utils.ThreadUtils;
+import cn.com.heaton.blelibrary.ota.OtaManager;
+import cn.com.superLei.aoparms.annotation.Permission;
 
 public class ChildAdapter extends RecyclerAdapter<BluetoothGattCharacteristic> {
+
+    public static final int REQUEST_PERMISSION_WRITE = 3;
+    private Ble<BleDevice> ble = Ble.getInstance();
+    private String path = Environment.getExternalStorageDirectory() + "/BleOTA/";
 
     public ChildAdapter(Context context, List<BluetoothGattCharacteristic> datas) {
         super(context, R.layout.item_deviceinfo_child, datas);
@@ -46,6 +59,21 @@ public class ChildAdapter extends RecyclerAdapter<BluetoothGattCharacteristic> {
         RecyclerViewHolder holder = super.onCreateViewHolder(parent, viewType);
 
         return holder;
+    }
+
+    /**
+     * OTA升级
+     */
+    @Permission(value = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+            requestCode = REQUEST_PERMISSION_WRITE,
+            rationale = "读写SD卡权限被拒绝,将会影响OTA升级功能哦!")
+    public void updateOta() {
+        //此处为了方便把OTA升级文件直接放到assets文件夹下，拷贝到/aceDownload/文件夹中  以便使用
+//        Utils.copyOtaFile(Test.this, path);
+        File file = new File(path + Constant.Constance.OTA_FILE_PATH);
+        OtaManager mOtaManager = new OtaManager(mContext);
+        boolean result = mOtaManager.startOtaUpdate(file, ble.getConnetedDevices().get(0), ble);
+        BleLog.e("OTA升级结果:", result + "");
     }
 
     @Override
@@ -253,6 +281,13 @@ public class ChildAdapter extends RecyclerAdapter<BluetoothGattCharacteristic> {
                     }
                 });
             }
+
+            TextView tvOta = new TextView(mContext);
+            tvOta.setPadding(12,22,12,22);
+            tvOta.setText("点击升级");
+            tvOta.setOnClickListener(v->updateOta());
+            llDesc.addView(tvOta);
+
         }
 
     }

@@ -19,7 +19,7 @@ public class Constant {
     //全局静态常量
     @Retention(RetentionPolicy.SOURCE)
     public @interface Constance {
-        String OTA_FILE_PATH = "new_ota.bin";//ota文件路径
+        String OTA_FILE_PATH = "W8.bin";//ota文件路径
     }
 
     @Retention(RetentionPolicy.SOURCE)

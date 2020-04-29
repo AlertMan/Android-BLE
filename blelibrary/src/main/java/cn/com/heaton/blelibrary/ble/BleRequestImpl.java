@@ -486,7 +486,7 @@ public final class BleRequestImpl<T extends BleDevice> {
                 if (options.uuid_write_cha.equals(gattCharacteristic.getUuid())) {
                     gattCharacteristic.setValue(value);
                     boolean result = gattHashMap.get(address).writeCharacteristic(gattCharacteristic);
-                    BleLog.d(TAG, address + " -- write data:" + Arrays.toString(value));
+                    BleLog.d(TAG, address + " -- write data:" + ByteUtils.toHexString(value));
                     BleLog.d(TAG, address + " -- write result:" + result);
                     return result;
                 }
@@ -817,7 +817,7 @@ public final class BleRequestImpl<T extends BleDevice> {
             if (otaWriteCharacteristic != null && options.uuid_ota_write_cha.equals(otaWriteCharacteristic.getUuid())) {
                 otaWriteCharacteristic.setValue(value);
                 boolean result = writeCharacteristic(gattHashMap.get(address), otaWriteCharacteristic);
-                BleLog.d(TAG, address + " -- write data:" + Arrays.toString(value));
+                BleLog.d(TAG, address + " -- write data:" + ByteUtils.toHexString(value));
                 BleLog.d(TAG, address + " -- write result:" + result);
                 return result;
             }

@@ -1,9 +1,12 @@
 package com.blehelper.demo.ui;
 
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -19,6 +22,7 @@ import java.util.List;
 
 import cn.com.heaton.blelibrary.ble.Ble;
 import cn.com.heaton.blelibrary.ble.callback.BleConnectCallback;
+import cn.com.heaton.blelibrary.ble.callback.BleNotiftCallback;
 import cn.com.heaton.blelibrary.ble.model.BleDevice;
 
 public class DeviceInfoActivity extends AppCompatActivity {
@@ -50,6 +54,8 @@ public class DeviceInfoActivity extends AppCompatActivity {
             ble.cancelConnectting(bleDevice);
         } else if (bleDevice.isDisconnected()) {
             ble.connect(bleDevice, connectCallback);
+
+
         }
     }
 
@@ -74,6 +80,7 @@ public class DeviceInfoActivity extends AppCompatActivity {
             Log.e(TAG, "onConnectionChanged: " + device.getConnectionState());
             if (device.isConnected()) {
                 actionBar.setSubtitle("已连接");
+                setNotify(device);
             }else if (device.isConnectting()){
                 actionBar.setSubtitle("连接中...");
             }
@@ -140,6 +147,27 @@ public class DeviceInfoActivity extends AppCompatActivity {
             });*/
         }
     };
+
+    private void setNotify(BleDevice device) {
+        Ble.getInstance().enableNotify(device,true,new BleNotiftCallback<BleDevice>(){
+            @Override
+            public void onChanged(BleDevice device, BluetoothGattCharacteristic characteristic) {
+                Log.d("TEST","onChanged");
+            }
+
+            @Override
+            public void onNotifySuccess(BleDevice device) {
+                super.onNotifySuccess(device);
+                Log.d("TEST","onNotifySuccess");
+            }
+
+            @Override
+            public void onNotifyCanceled(BleDevice device) {
+                super.onNotifyCanceled(device);
+                Log.d("TEST","onNotifyCanceled");
+            }
+        });
+    }
 
     @Override
     protected void onDestroy() {
