@@ -98,17 +98,19 @@ public class CrcUtils {
         public static int CRC16_HY(byte[] datas, int offset, int length,int crc){
             if(crc == -1){
                 crc = 0xFFFF;
+            }else{
+                crc &= 0xFFFF;
             }
-            crc ^= 0xFFFF;
             if(datas != null) {
                 for (int i = offset, cnt = offset + length; i < cnt; i++) {
-                    crc =  ((crc >> 8) | (crc << 8));
-                    crc ^= datas[i];
-                    crc ^= (crc & 0xFF) >> 4;
+                    crc =  0x00FF & (crc >> 8) | (crc << 8) & 0xFFFF;
+                    crc ^= datas[i] & 0x00FF ;
+                    crc ^= 0x00FF & (crc & 0xFF)  >> 4 ;
                     crc ^= (crc << 8) << 4;
-                    crc ^= ((crc & 0xFF) << 4) << 1;
+                    crc ^= ((crc & 0x00FF) << 4) << 1;
                 }
             }
+            crc &= 0xFFFF;
             return crc;
         }
         /**
@@ -120,16 +122,15 @@ public class CrcUtils {
             int crc = 0xFFFF;
             if(datas != null) {
                 for (int i = offset, cnt = offset + length; i < cnt; i++) {
-                    crc =  (byte)(crc >> 8) | (crc << 8);
-                    crc ^= datas[i];
-                    crc ^= (byte)(crc & 0xFF) >> 4;
+                    crc =  0x00FF & (crc >> 8) | (crc << 8) & 0xFFFF;
+                    crc ^= datas[i] & 0x00FF ;
+                    crc ^= 0x00FF & (crc & 0xFF)  >> 4 ;
                     crc ^= (crc << 8) << 4;
-                    crc ^= ((crc & 0xFF) << 4) << 1;
+                    crc ^= ((crc & 0x00FF) << 4) << 1;
                 }
             }
             crc &= 0xFFFF;
-            short shorCrc = (short)crc;
-            return ByteUtils.short2Bytes(shorCrc);
+            return ByteUtils.int2byte(crc);
         }
 
         public static int CRC16_IBM(byte[] source, int offset, int length) {
