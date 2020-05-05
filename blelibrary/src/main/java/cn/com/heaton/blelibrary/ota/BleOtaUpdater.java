@@ -28,7 +28,7 @@ public class BleOtaUpdater implements OtaListener {
 	private       int       fileCrc     = -1;//File crc 注意这个值是实时计算
 	private       int       mFrameCnt     = 0;//发送的帧数
 	private final int       mTimeout     = 12;//Write timeout (seconds)
-	private final int       mPacketSize  = 248;//Packet data size 246 + 5 + 2 = 253 < 256;
+	private final int       mPacketSize  = 250;//Packet data size 248 + 5 + 2 = 255 < 256;
 	private       boolean   mShouldStop  = false;//Whether to stop
 	private Handler mHandler;//Main thread object
 	private String mFilePath    = null;//file path
@@ -183,7 +183,7 @@ public class BleOtaUpdater implements OtaListener {
 			case OTA_CMD_EXECUTION_NEW_CODE:
 				head[0] = (byte) 0xAA;
 				head[1] = cmdVal;
-				head[2] = (byte)(data.length & 0xFF);
+				head[2] = (byte)(dataLength & 0xFF);
 				packetLength = head.length + dataLength + checksumBytes.length;
 				dataPacket = new byte[packetLength];
 				System.arraycopy(head, 0, dataPacket, 0, head.length);
@@ -249,7 +249,7 @@ public class BleOtaUpdater implements OtaListener {
 	 * @throws IOException
 	 */
 	private int otaSendBrickData(FileInputStream fin, int dataLength) throws IOException {
-		byte[] data = new byte[dataLength + 2];
+		byte[] data = new byte[dataLength];
 		// Read the data block
 		int readLength = fin.read(data,2,dataLength);
 		if (readLength <= 0) {// Reading failed
@@ -258,8 +258,8 @@ public class BleOtaUpdater implements OtaListener {
 			}
 			return -1;
 		} else {
-			if (readLength < dataLength) {
-				dataLength = readLength;
+			if (readLength < dataLength - 2) {
+				dataLength = readLength + 2;
 			}
 			//Get Frame index
 			mFrameCnt++;
@@ -597,8 +597,9 @@ public class BleOtaUpdater implements OtaListener {
 					mHandler.obtainMessage(OTA_UPDATE, mPercent, 0, mIndex).sendToTarget();
 				}
 
-				// Record the sent data block
-				transfereedSize += mPacketSize;
+				// Record the sent data block // 2 bytes length
+				//transfereedSize += mPacketSize - 2;
+				transfereedSize = offset1;
 				long now = Calendar.getInstance().getTimeInMillis();
 				// Record the total data block transmission time
 				this.mElapsedTime = (int) ((now - begin) / 1000L);
